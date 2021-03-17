@@ -8,6 +8,9 @@ RoutePlanner::RoutePlanner(RouteModel &model, float start_x, float start_y, floa
     end_x *= 0.01;
     end_y *= 0.01;
 
+    RouteModel::Node start_node = m_Model.FindClosestNode(start_x, start_y);
+    RouteModel::Node end_node = m_Model.FindClosestNode(end_x, end_y);
+
     // TODO 2: Use the m_Model.FindClosestNode method to find the closest nodes to the starting and ending coordinates.
     // Store the nodes you find in the RoutePlanner's start_node and end_node attributes.
 
@@ -20,7 +23,7 @@ RoutePlanner::RoutePlanner(RouteModel &model, float start_x, float start_y, floa
 // - Node objects have a distance method to determine the distance to another node.
 
 float RoutePlanner::CalculateHValue(RouteModel::Node const *node) {
-
+  return node->distance(*node);
 }
 
 
@@ -32,7 +35,13 @@ float RoutePlanner::CalculateHValue(RouteModel::Node const *node) {
 // - For each node in current_node.neighbors, add the neighbor to open_list and set the node's visited attribute to true.
 
 void RoutePlanner::AddNeighbors(RouteModel::Node *current_node) {
-
+  current_node->FindNeighbors();
+  for (auto neighbor : current_node->neighbors) {
+    neighbor->h_value = CalculateHValue(neighbor);
+    neighbor->g_value =+ 1;
+    neighbor->visited = true;
+    open_list.push_back(neighbor);
+  }
 }
 
 
@@ -42,9 +51,21 @@ void RoutePlanner::AddNeighbors(RouteModel::Node *current_node) {
 // - Create a pointer to the node in the list with the lowest sum.
 // - Remove that node from the open_list.
 // - Return the pointer.
+bool Compare(const RouteModel::Node *a, const RouteModel::Node *b) {
+  float f1 = a->g_value + a->h_value;
+  float f2 = b->g_value + b->h_value;
+  return f1 > f2;
+}
+
+void NodeSort(std::vector<RouteModel::Node*> v) {
+  std::sort(v.begin(), v.end(), Compare);
+}
 
 RouteModel::Node *RoutePlanner::NextNode() {
-
+  NodeSort(open_list);
+  RouteModel::Node* node = open_list.back();
+  open_list.pop_back();
+  return node;
 }
 
 
@@ -60,6 +81,14 @@ std::vector<RouteModel::Node> RoutePlanner::ConstructFinalPath(RouteModel::Node 
     // Create path_found vector
     distance = 0.0f;
     std::vector<RouteModel::Node> path_found;
+    RouteModel::Node parent_node = *current_node;
+
+    while(parent_node.parent != nullptr)
+    {
+      parent_node = *parent_node.parent;
+      distance =+ parent_node.distance(*parent_node.parent);
+      path_found.insert(path_found.begin(), parent_node);
+    }
 
     // TODO: Implement your solution here.
 

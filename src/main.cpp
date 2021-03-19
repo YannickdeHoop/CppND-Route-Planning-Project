@@ -68,7 +68,8 @@ int main(int argc, const char **argv)
 
     if(input_coordinates.size() != 4)
     {
-        throw std::runtime_error("Input is not valid");
+       std::cout << "Input is not valid" << std::endl;
+       return 1;
     }
 
     float start_x = input_coordinates[0], start_y = input_coordinates[1];
